@@ -6,6 +6,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
+from datetime import datetime
 
 st.set_page_config(
     page_title="PR Tracking - Dummy",
@@ -439,11 +440,10 @@ def load_schedule_data(uploaded_file):
 # --- SIDEBAR: UPLOAD & FILTER PR ---
 with st.sidebar:
   st.header("📂 Data Source")
-  sisa_sesi_detik = max(
-      0, int(SESSION_TIMEOUT_SECONDS - (time.time() - st.session_state.login_at))
-  )
-  sisa_menit, sisa_dtk = divmod(sisa_sesi_detik, 60)
-  st.caption(f"⏱️ Sisa waktu sesi aktif: **{sisa_menit}m {sisa_dtk:02d}d**")
+  waktu_kadaluarsa = datetime.fromtimestamp(
+      st.session_state.login_at + SESSION_TIMEOUT_SECONDS
+  ).strftime("%H:%M:%S")
+  st.caption(f"⏱️ Sesi kadaluarsa pukul: **{waktu_kadaluarsa}**")
 
   uploaded_file = st.file_uploader(
       f"Upload File Excel - Jadwal (Maks. {MAX_EXCEL_SIZE_MB} MB)",
