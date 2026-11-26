@@ -10,114 +10,20 @@ st.set_page_config(
     layout="wide",
 )
 
-# --- STYLING CSS AGAR TAMPILAN LEBIH RAPIH & BERWARNA ---
+# --- STYLING RINGAN UNTUK MEMPERCANTIK KOMPONEN BAWAAN STREAMLIT ---
 st.markdown(
     """
     <style>
       .stApp {
         background-color: #f8fafc;
       }
-      .app-header {
-        background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 60%, #0284c7 100%);
-        padding: 1.25rem 1.5rem;
-        border-radius: 14px;
-        color: #ffffff;
-        margin-bottom: 1.1rem;
-        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.12);
-      }
-      .app-header h2 {
-        margin: 0 0 0.25rem 0;
-        color: #ffffff;
-        font-size: 1.55rem;
-        font-weight: 700;
-      }
-      .app-header p {
-        margin: 0;
-        color: #e0f2fe;
-        font-size: 0.92rem;
-      }
-      .pin-card {
-        max-width: 440px;
-        margin: 2.5rem auto 1rem auto;
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-top: 5px solid #2563eb;
-        border-radius: 14px;
-        padding: 1.75rem;
-        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
-      }
-      .pr-card {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 1.15rem 1.3rem;
-        margin-bottom: 1rem;
-        box-shadow: 0 3px 10px rgba(15, 23, 42, 0.05);
-      }
-      .pr-card-po {
-        border-left: 6px solid #16a34a;
-      }
-      .pr-card-progress {
-        border-left: 6px solid #0284c7;
-      }
-      .pr-card-top {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: space-between;
-        align-items: center;
-        gap: 0.5rem;
-        margin-bottom: 0.65rem;
-        padding-bottom: 0.55rem;
-        border-bottom: 1px dashed #cbd5e1;
-      }
-      .pr-title {
-        font-size: 1.08rem;
-        font-weight: 700;
-        color: #0f172a;
-      }
-      .badge-green {
-        background: #dcfce7;
-        color: #166534;
-        border: 1px solid #86efac;
-        padding: 0.22rem 0.65rem;
-        border-radius: 999px;
-        font-size: 0.78rem;
-        font-weight: 700;
-      }
-      .badge-blue {
-        background: #e0f2fe;
-        color: #075985;
-        border: 1px solid #7dd3fc;
-        padding: 0.22rem 0.65rem;
-        border-radius: 999px;
-        font-size: 0.78rem;
-        font-weight: 700;
-      }
-      .badge-amber {
-        background: #fef3c7;
-        color: #92400e;
-        border: 1px solid #fcd34d;
-        padding: 0.22rem 0.65rem;
-        border-radius: 999px;
-        font-size: 0.78rem;
-        font-weight: 700;
-      }
-      .pr-meta-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 0.5rem 1rem;
-        font-size: 0.9rem;
-        color: #334155;
-      }
-      .pr-meta-item strong {
-        color: #0f172a;
-      }
       div[data-testid="stMetric"] {
         background-color: #ffffff;
         border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 0.85rem 1rem;
-        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+        border-top: 4px solid #2563eb;
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
       }
     </style>
     """,
@@ -129,41 +35,29 @@ if "pin_valid" not in st.session_state:
   st.session_state.pin_valid = False
 
 if not st.session_state.pin_valid:
-  st.markdown(
-      """
-      <div class="pin-card">
-        <div style="font-size: 1.35rem; font-weight: 700; color: #0f172a; margin-bottom: 0.25rem;">
-          🔒 Verifikasi Akses
-        </div>
-        <div style="font-size: 0.9rem; color: #64748b;">
-          Masukkan PIN untuk membuka aplikasi Tracking Jadwal PR.
-        </div>
-      </div>
-      """,
-      unsafe_allow_html=True,
-  )
   _, col_mid, _ = st.columns([1, 1.3, 1])
   with col_mid:
-    input_pin = st.text_input("PIN Akses", type="password", placeholder="Masukkan PIN...")
-    if st.button("Masuk", type="primary", use_container_width=True):
-      benar_pin = str(st.secrets.get("APP_PIN", ""))
-      if benar_pin and hmac.compare_digest(input_pin, benar_pin):
-        st.session_state.pin_valid = True
-        st.rerun()
-      else:
-        st.error("PIN salah atau belum diatur.")
+    with st.container(border=True):
+      st.subheader("🔒 Verifikasi Akses")
+      st.caption("Masukkan PIN untuk membuka aplikasi Tracking Jadwal PR.")
+      input_pin = st.text_input(
+          "PIN Akses", type="password", placeholder="Masukkan PIN..."
+      )
+      if st.button("Masuk", type="primary", use_container_width=True):
+        benar_pin = str(st.secrets.get("APP_PIN", ""))
+        if benar_pin and hmac.compare_digest(input_pin, benar_pin):
+          st.session_state.pin_valid = True
+          st.rerun()
+        else:
+          st.error("PIN salah atau belum diatur.")
   st.stop()
 
 # --- HEADER UTAMA ---
-st.markdown(
-    """
-    <div class="app-header">
-      <h2>📋 Tracking Timeline Pengadaan Berdasarkan Nomor PR</h2>
-      <p>Gantt Chart Jadwal Proses Pengadaan (Plan &amp; Realisasi) • Fungsi Asset Management</p>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+with st.container(border=True):
+  st.markdown("## 📋 Tracking Timeline Pengadaan Berdasarkan Nomor PR")
+  st.caption(
+      "Gantt Chart Jadwal Proses Pengadaan (Plan & Realisasi) • Fungsi Asset Management"
+  )
 
 
 def _clean_id_str(val):
@@ -178,7 +72,7 @@ def _clean_id_str(val):
 
 
 def _format_usd(val):
-  """Format nilai numerik ke format mata uang"""
+  """Format nilai numerik ke format mata uang."""
   num_val = pd.to_numeric(val, errors="coerce")
   return f"USD {num_val:,.2f}" if pd.notna(num_val) else ""
 
@@ -235,8 +129,16 @@ def load_schedule_data(uploaded_file):
               "nilai_po_num": float(n_po_num) if pd.notna(n_po_num) else 0.0,
           }
 
-  # 3. Normalisasi nama & isi kolom
+  # 3. Normalisasi nama & isi kolom (abaikan kolom catatan/Unnamed)
   df.columns = df.columns.astype(str).str.strip()
+  valid_cols = [
+      c
+      for c in df.columns
+      if not c.lower().startswith("unnamed")
+      and "warna kuning" not in c.lower()
+  ]
+  df = df[valid_cols].copy()
+
   col_rules = [
       (("realisasi", "actual", "aktual"), "Realisasi_Input"),
       (("pr", "nomor"), "Nomor PR"),
@@ -263,9 +165,7 @@ def load_schedule_data(uploaded_file):
   df["Plan_Input"] = pd.to_datetime(df["Plan_Input"], errors="coerce")
 
   # Tandai sel Realisasi yang secara eksplisit berisi teks "none"
-  df["Realisasi_Is_None"] = df["Realisasi_Input"].apply(
-      lambda v: str(v).strip().lower() == "none" if pd.notna(v) else False
-  )
+  df["Realisasi_Is_None"] = df["Realisasi_Input"].apply(_is_none_text)
   df["Realisasi_Input"] = pd.to_datetime(
       df["Realisasi_Input"], errors="coerce"
   )
@@ -325,6 +225,7 @@ def load_schedule_data(uploaded_file):
 
     df_group_calc = pd.DataFrame(temp_rows)
 
+    # Acuan khusus baris T_Penerbitan PO / No PO
     po_mask = (
         df_group_calc["Deskripsi"]
         .str.lower()
@@ -382,11 +283,11 @@ def load_schedule_data(uploaded_file):
 
 # --- SIDEBAR: UPLOAD & FILTER PR ---
 with st.sidebar:
-  st.markdown("### 📂 Data Source")
+  st.header("📂 Data Source")
   uploaded_file = st.file_uploader(
       "Upload File Excel - Jadwal", type=["xlsx", "xls"]
   )
-  st.markdown("---")
+  st.divider()
   if st.button("🚪 Kunci / Logout PIN", use_container_width=True):
     st.session_state.pin_valid = False
     st.rerun()
@@ -409,121 +310,126 @@ if uploaded_file is not None:
           ["📈 Jadwal Aktivitas", "📄 Resume Tabel Jadwal"]
       )
 
-      # --- TAB 1: JADWAL AKTIVITAS ---
+      # --- TAB 1: JADWAL AKTIVITAS (GANTT CHART & KARTU RINGKASAN) ---
       with tab_aktivitas:
-        fig = px.timeline(
-            df_filtered,
-            x_start="Plan",
-            x_end="Selesai",
-            y="Deskripsi",
-            color="Milestone",
-            color_discrete_map={
-                "🏁 Mulai (Pra Tender)": "#059669",
-                "⏳ Berjalan": "#d97706",
-                "📦 Delivery Time PO": "#e11d48",
-                "📥 Goods Receipt (GR)": "#2563eb",
-            },
-            title="<b>Gantt Chart Tracking Milestone PR (Plan & Realisasi)</b>",
-            hover_data={
-                "Nomor PR": True,
-                "Hari": True,
-                "Plan": "|%d %b %Y",
-                "Selesai": "|%d %b %Y",
-                "Milestone": False,
-            },
-            labels={
-                "Deskripsi": "Tahapan Pekerjaan",
-                "Plan": "Tanggal Mulai",
-                "Selesai": "Tanggal Selesai",
-            },
-        )
-
-        df_markers = df_filtered.dropna(subset=["Realisasi_Tgl"]).copy()
-        if not df_markers.empty:
-          df_markers["Tgl_Str"] = df_markers["Realisasi_Tgl"].dt.strftime(
-              "%d %b %Y"
-          )
-          df_markers["PO_Str"] = df_markers["Tgl_Plan_PO"].apply(
-              lambda d: (
-                  d.strftime("%d %b %Y") if pd.notna(d) else "Belum ada Plan PO"
-              )
+        with st.container(border=True):
+          fig = px.timeline(
+              df_filtered,
+              x_start="Plan",
+              x_end="Selesai",
+              y="Deskripsi",
+              color="Milestone",
+              color_discrete_map={
+                  "🏁 Mulai (Pra Tender)": "#059669",
+                  "⏳ Berjalan": "#d97706",
+                  "📦 Delivery Time PO": "#e11d48",
+                  "📥 Goods Receipt (GR)": "#2563eb",
+              },
+              title="<b>Gantt Chart Tracking Milestone PR (Plan & Realisasi)</b>",
+              hover_data={
+                  "Nomor PR": True,
+                  "Hari": True,
+                  "Plan": "|%d %b %Y",
+                  "Selesai": "|%d %b %Y",
+                  "Milestone": False,
+              },
+              labels={
+                  "Deskripsi": "Tahapan Pekerjaan",
+                  "Plan": "Tanggal Mulai",
+                  "Selesai": "Tanggal Selesai",
+              },
           )
 
-          marker_configs = [
-              (
-                  df_markers[df_markers["Status_Posisi_Bar"] == "hijau"],
-                  "Realisasi (Di Dalam / Lebih Awal dari Bar)",
-                  "#16a34a",
-                  "Titik Realisasi (On Track / Lebih Awal)",
-              ),
-              (
-                  df_markers[df_markers["Status_Posisi_Bar"] == "merah"],
-                  "Realisasi (Lewat / Di Luar Bar Kanan)",
-                  "#dc2626",
-                  "Titik Realisasi (Lewat Bar Plan)",
-              ),
-          ]
-          for df_sub, name_lbl, clr, hover_title in marker_configs:
-            if not df_sub.empty:
-              fig.add_trace(
-                  go.Scatter(
-                      x=df_sub["Realisasi_Tgl"],
-                      y=df_sub["Deskripsi"],
-                      mode="markers",
-                      name=name_lbl,
-                      marker=dict(
-                          color=clr,
-                          size=9,
-                          line=dict(color="#0f172a", width=1.2),
-                      ),
-                      customdata=list(
-                          zip(
-                              df_sub["Nomor PR"],
-                              df_sub["Tgl_Str"],
-                              df_sub["Durasi_Hover_Text"],
-                              df_sub["PO_Str"],
-                          )
-                      ),
-                      hovertemplate=(
-                          f"<b>{hover_title}</b><br>"
-                          "Nomor PR: %{customdata[0]}<br>"
-                          "Tahapan: %{y}<br>"
-                          "Tanggal: <b>%{customdata[1]}</b><br>"
-                          "<b>%{customdata[2]}</b> (Plan PO:"
-                          " %{customdata[3]})<extra></extra>"
-                      ),
-                  )
-              )
+          df_markers = df_filtered.dropna(subset=["Realisasi_Tgl"]).copy()
+          if not df_markers.empty:
+            df_markers["Tgl_Str"] = df_markers["Realisasi_Tgl"].dt.strftime(
+                "%d %b %Y"
+            )
+            df_markers["PO_Str"] = df_markers["Tgl_Plan_PO"].apply(
+                lambda d: (
+                    d.strftime("%d %b %Y")
+                    if pd.notna(d)
+                    else "Belum ada Plan PO"
+                )
+            )
 
-        urutan_deskripsi = (
-            df_filtered[df_filtered["Nomor PR"] == selected_pr[0]]["Deskripsi"]
-            .drop_duplicates()
-            .tolist()
-        )
-        fig.update_yaxes(
-            categoryorder="array",
-            categoryarray=urutan_deskripsi,
-            autorange="reversed",
-        )
-        fig.update_layout(
-            paper_bgcolor="#ffffff",
-            plot_bgcolor="#f8fafc",
-            font=dict(size=11, color="#0f172a"),
-            margin=dict(t=65, b=50, l=20, r=20),
-            xaxis=dict(
-                showgrid=True, gridcolor="#e2e8f0", tickformat="%d %b %Y"
-            ),
-            yaxis=dict(showgrid=True, gridcolor="#f1f5f9"),
-            legend=dict(
-                bgcolor="#ffffff",
-                bordercolor="#e2e8f0",
-                borderwidth=1,
-                title="Status Milestone & Realisasi",
-            ),
-        )
-        st.plotly_chart(
-            fig, use_container_width=True, key="gantt_jadwal_aktivitas"
-        )
+            marker_configs = [
+                (
+                    df_markers[df_markers["Status_Posisi_Bar"] == "hijau"],
+                    "Realisasi (Di Dalam / Lebih Awal dari Bar)",
+                    "#16a34a",
+                    "Titik Realisasi (On Track / Lebih Awal)",
+                ),
+                (
+                    df_markers[df_markers["Status_Posisi_Bar"] == "merah"],
+                    "Realisasi (Lewat / Di Luar Bar Kanan)",
+                    "#dc2626",
+                    "Titik Realisasi (Lewat Bar Plan)",
+                ),
+            ]
+            for df_sub, name_lbl, clr, hover_title in marker_configs:
+              if not df_sub.empty:
+                fig.add_trace(
+                    go.Scatter(
+                        x=df_sub["Realisasi_Tgl"],
+                        y=df_sub["Deskripsi"],
+                        mode="markers",
+                        name=name_lbl,
+                        marker=dict(
+                            color=clr,
+                            size=9,
+                            line=dict(color="#0f172a", width=1.1),
+                        ),
+                        customdata=list(
+                            zip(
+                                df_sub["Nomor PR"],
+                                df_sub["Tgl_Str"],
+                                df_sub["Durasi_Hover_Text"],
+                                df_sub["PO_Str"],
+                            )
+                        ),
+                        hovertemplate=(
+                            f"<b>{hover_title}</b><br>"
+                            "Nomor PR: %{customdata[0]}<br>"
+                            "Tahapan: %{y}<br>"
+                            "Tanggal: <b>%{customdata[1]}</b><br>"
+                            "<b>%{customdata[2]}</b> (Plan PO:"
+                            " %{customdata[3]})<extra></extra>"
+                        ),
+                    )
+                )
+
+          urutan_deskripsi = (
+              df_filtered[df_filtered["Nomor PR"] == selected_pr[0]][
+                  "Deskripsi"
+              ]
+              .drop_duplicates()
+              .tolist()
+          )
+          fig.update_yaxes(
+              categoryorder="array",
+              categoryarray=urutan_deskripsi,
+              autorange="reversed",
+          )
+          fig.update_layout(
+              paper_bgcolor="#ffffff",
+              plot_bgcolor="#f8fafc",
+              font=dict(size=11, color="#0f172a"),
+              margin=dict(t=60, b=45, l=15, r=15),
+              xaxis=dict(
+                  showgrid=True, gridcolor="#e2e8f0", tickformat="%d %b %Y"
+              ),
+              yaxis=dict(showgrid=True, gridcolor="#f1f5f9"),
+              legend=dict(
+                  bgcolor="#ffffff",
+                  bordercolor="#e2e8f0",
+                  borderwidth=1,
+                  title="Status Milestone & Realisasi",
+              ),
+          )
+          st.plotly_chart(
+              fig, use_container_width=True, key="gantt_jadwal_aktivitas"
+          )
 
         # --- RINGKASAN INFO TANGGAL & PROGRES PR ---
         st.markdown("### 📌 Informasi Ringkasan Tanggal Proses PR")
@@ -555,11 +461,20 @@ if uploaded_file is not None:
             else 0.0
         )
 
+        # Kartu metrik berwarna (komponen bawaan Streamlit)
         m1, m2, m3, m4 = st.columns(4)
-        m1.metric("Overall Progress PR", f"{overall_progres_pct:.2f}%", f"{total_pr_all} PR")
-        m2.metric("PR Terbit PO", f"{pr_terbit_po_count} PR", f"dari {total_pr_all} PR")
-        m3.metric("Total PR Created", f"USD {total_pr_created:,.2f}")
-        m4.metric("Total PO Created", f"USD {total_po_created:,.2f}")
+        m1.metric(
+            "📊 Overall Progress PR",
+            f"{overall_progres_pct:.2f}%",
+            f"Total {total_pr_all} PR",
+        )
+        m2.metric(
+            "✅ PR Terbit PO",
+            f"{pr_terbit_po_count} PR",
+            f"dari {total_pr_all} PR",
+        )
+        m3.metric("💵 Total PR Created", f"USD {total_pr_created:,.2f}")
+        m4.metric("🧾 Total PO Created", f"USD {total_po_created:,.2f}")
 
         st.write("")
         hari_ini = pd.Timestamp.now().normalize()
@@ -593,20 +508,19 @@ if uploaded_file is not None:
           )
 
           if pd.notna(tgl_po_real):
-            tgl_po_html = (
-                f"<strong>Real Terbit PO:</strong> {tgl_po_real.strftime('%d %B %Y')}"
-                + (
-                    f" (Plan: {tgl_po_plan.strftime('%d %B %Y')})"
-                    if pd.notna(tgl_po_plan)
-                    else ""
-                )
+            tgl_po_str = (
+                f"**Real Terbit PO: {tgl_po_real.strftime('%d %B %Y')}** (Plan:"
+                f" {tgl_po_plan.strftime('%d %B %Y')})"
+                if pd.notna(tgl_po_plan)
+                else f"**Real Terbit PO: {tgl_po_real.strftime('%d %B %Y')}**"
             )
           elif pd.notna(tgl_po_plan):
-            tgl_po_html = (
-                f"<strong>Plan Terbit PO:</strong> {tgl_po_plan.strftime('%d %B %Y')} (Belum Realisasi)"
+            tgl_po_str = (
+                f"Plan Terbit PO: {tgl_po_plan.strftime('%d %B %Y')} (Belum"
+                " Realisasi)"
             )
           else:
-            tgl_po_html = "Tahapan T_Penerbitan PO / No PO tidak ditemukan"
+            tgl_po_str = "Tahapan T_Penerbitan PO / No PO tidak ditemukan"
 
           delivery_mask = (
               df_pr_group["Deskripsi"]
@@ -648,167 +562,165 @@ if uploaded_file is not None:
           if last_valid_idx is not None and total_tahapan_pr > 0:
             tahapan_tercapai_seri = int(last_valid_idx)
             persen_progres_pr = (tahapan_tercapai_seri / total_tahapan_pr) * 100
-            status_progres_text = (
-                f"{persen_progres_pr:.2f}% ({tahapan_tercapai_seri} dari {total_tahapan_pr} tahapan)"
+            status_progres_line = (
+                "**Status Progres dari Pra Tender - Terbit PO :"
+                f" {persen_progres_pr:.2f}%** ({tahapan_tercapai_seri} dari"
+                f" {total_tahapan_pr} tahapan)"
             )
           else:
             persen_progres_pr = 0.0
-            status_progres_text = "0.00% (Belum ada tanggal realisasi diinput)"
+            status_progres_line = (
+                "**Status Progres 0.00%** (Belum ada tanggal realisasi diinput)"
+            )
 
           po_sudah_terbit = pd.notna(tgl_po_real) or (
               persen_progres_pr >= 90.0 and bool(no_po_terbit)
           )
 
-          card_cls = "pr-card pr-card-po" if po_sudah_terbit else "pr-card pr-card-progress"
-          badge_html = (
-              '<span class="badge-green">✅ Terbit PO</span>'
-              if po_sudah_terbit
-              else '<span class="badge-blue">🔄 On Progress</span>'
-          )
-
-          durasi_real_html = ""
-          if (
-              po_sudah_terbit
-              and pd.notna(tgl_po_real)
-              and pd.notna(tgl_mulai_dt)
-          ):
-            total_hari_real = int((tgl_po_real - tgl_mulai_dt).days)
-            durasi_real_html = (
-                f'<div class="pr-meta-item"><strong>Realisasi Durasi (Pra Tender - Terbit PO):</strong> {total_hari_real} hari</div>'
-            )
-
-          po_detail_html = ""
-          if persen_progres_pr >= 90.0 and no_po_terbit:
-            nilai_po_tampil = (
-                nilai_po_str if nilai_po_str else "Nilai PO belum diinput"
-            )
-            po_detail_html = (
-                f'<div class="pr-meta-item"><strong>Nomor PO:</strong> {no_po_terbit}</div>'
-                f'<div class="pr-meta-item"><strong>Nilai PO (USD):</strong> {nilai_po_tampil}</div>'
-            )
-
-          header_html = (
-              f'<div class="pr-meta-item"><strong>Header:</strong> {header_pr_str}</div>'
-              if header_pr_str
-              else ""
-          )
-          nilai_pr_html = (
-              f'<div class="pr-meta-item"><strong>Nilai PR (USD):</strong> {nilai_pr_str}</div>'
-              if nilai_pr_str
-              else ""
-          )
-
-          st.markdown(
-              f"""
-              <div class="{card_cls}">
-                <div class="pr-card-top">
-                  <div class="pr-title">📌 Nomor PR: {pr}</div>
-                  <div>{badge_html} <span class="badge-amber">Progres: {persen_progres_pr:.1f}%</span></div>
-                </div>
-                <div class="pr-meta-grid">
-                  {header_html}
-                  {nilai_pr_html}
-                  <div class="pr-meta-item"><strong>Progres Pra Tender - Terbit PO:</strong> {status_progres_text}</div>
-                  <div class="pr-meta-item"><strong>Tanggal Mulai (Pra Tender):</strong> {tgl_mulai_total}</div>
-                  <div class="pr-meta-item"><strong>Target Plan Delivery:</strong> {tgl_selesai_total}</div>
-                  <div class="pr-meta-item"><strong>Planned Durasi (Pra Tender - Terbit PO):</strong> {total_hari} hari</div>
-                  {durasi_real_html}
-                  {po_detail_html}
-                  <div class="pr-meta-item">{tgl_po_html}</div>
-                  <div class="pr-meta-item"><strong>Delivery Time Sesuai PO:</strong> {tgl_real_delivery_str}</div>
-                  <div class="pr-meta-item"><strong>Goods Receipt (V_Goods Receipt):</strong> {tgl_real_gr_str}</div>
-                </div>
-              </div>
-              """,
-              unsafe_allow_html=True,
-          )
-
-          # Evaluasi warning dengan acuan awal Plan A_Pra Tender & Plan T_Penerbitan PO
-          is_none_mask = (
-              df_pr_group["Realisasi_Is_None"]
-              if "Realisasi_Is_None" in df_pr_group.columns
-              else pd.Series([False] * len(df_pr_group))
-          )
-          df_pr_warn = df_pr_group[~is_none_mask].copy()
-
-          plan_a_dt = first_pr_row["Plan_A_Pra_Tender"]
-          selisih_hari_a = (
-              int((hari_ini - plan_a_dt).days)
-              if pd.notna(plan_a_dt)
-              else None
-          )
-          ada_po_atau_real_po = bool(no_po_terbit) or pd.notna(tgl_po_real)
-          ada_tanggal_realisasi = df_pr_warn["Realisasi_Tgl"].notna().any()
-          deskripsi_kosong = (
-              df_pr_warn.loc[df_pr_warn["Realisasi_Tgl"].isna(), "Deskripsi"]
-              .astype(str)
-              .str.strip()
-              .tolist()
-          )
-
-          warning_lines = []
-          tampilkan_warning = False
-
-          if ada_po_atau_real_po and deskripsi_kosong:
-            if pd.notna(tgl_po_real) and pd.notna(tgl_plan_po):
-              selisih_po = int((tgl_po_real - tgl_plan_po).days)
-              if selisih_po > 0:
-                tampilkan_warning = True
-                warning_lines.append(
-                    "• Selisih Realisasi PO - Plan PO:"
-                    f" **+{selisih_po} hari** (lewat dari Plan PO)"
-                )
-            else:
-              tampilkan_warning = True
-          elif ada_tanggal_realisasi and deskripsi_kosong:
-            tampilkan_warning = True
-          elif (not ada_po_atau_real_po) and (not ada_tanggal_realisasi):
-            if selisih_hari_a is not None:
-              tampilkan_warning = True
-
-          if tampilkan_warning:
-            if selisih_hari_a is not None:
-              warning_lines.insert(
-                  0,
-                  "• Selisih tanggal hari ini"
-                  f" ({hari_ini.strftime('%d %b %Y')}) terhadap Plan A_Pra Tender:"
-                  f" **{selisih_hari_a} hari**",
+          # Container card bawaan Streamlit + status berwarna (st.success / st.info)
+          with st.container(border=True):
+            col_head, col_prog = st.columns([3, 1.2])
+            with col_head:
+              judul_pr = f"#### 📌 Nomor PR: {pr}"
+              if header_pr_str:
+                judul_pr += f" — {header_pr_str}"
+              st.markdown(judul_pr)
+            with col_prog:
+              st.progress(
+                  min(max(persen_progres_pr / 100.0, 0.0), 1.0),
+                  text=f"Progres: {persen_progres_pr:.1f}%",
               )
+
+            baris_info = []
+            if nilai_pr_str:
+              baris_info.append(f"**Nilai PR (USD): {nilai_pr_str}**")
+
+            baris_info.extend([
+                status_progres_line,
+                f"• Tanggal Mulai Proses (Pra Tender): **{tgl_mulai_total}**",
+                f"• Tanggal Target Plan Delivery: **{tgl_selesai_total}**",
+                (
+                    "• Planned Durasi Proses (Pra Tender - Terbit PO):"
+                    f" **{total_hari}** hari"
+                ),
+            ])
+
             if (
-                ada_po_atau_real_po or ada_tanggal_realisasi
-            ) and deskripsi_kosong:
-              warning_lines.append(
-                  "• Deskripsi realisasi masih kosong:"
-                  f" **{', '.join(deskripsi_kosong)}**"
+                po_sudah_terbit
+                and pd.notna(tgl_po_real)
+                and pd.notna(tgl_mulai_dt)
+            ):
+              total_hari_real = int((tgl_po_real - tgl_mulai_dt).days)
+              baris_info.append(
+                  "• Realisasi Durasi Proses (Pra Tender - Terbit PO):"
+                  f" **{total_hari_real}** hari"
               )
-            st.error("  \n".join(warning_lines))
+
+            if persen_progres_pr >= 90.0 and no_po_terbit:
+              baris_info.append(f"**Nomor PO: {no_po_terbit}**")
+              nilai_po_tampil = (
+                  nilai_po_str if nilai_po_str else "Nilai PO belum diinput"
+              )
+              baris_info.append(f"**Nilai PO (USD): {nilai_po_tampil}**")
+
+            baris_info.extend([
+                f"• {tgl_po_str}",
+                f"• **Delivery Time Sesuai PO: {tgl_real_delivery_str}**",
+                f"• **Goods Receipt (V_Goods Receipt): {tgl_real_gr_str}**",
+            ])
+
+            if po_sudah_terbit:
+              st.success("  \n".join(baris_info))
+            else:
+              st.info("  \n".join(baris_info))
+
+            # Evaluasi warning
+            is_none_mask = (
+                df_pr_group["Realisasi_Is_None"]
+                if "Realisasi_Is_None" in df_pr_group.columns
+                else pd.Series([False] * len(df_pr_group))
+            )
+            df_pr_warn = df_pr_group[~is_none_mask].copy()
+
+            plan_a_dt = first_pr_row["Plan_A_Pra_Tender"]
+            selisih_hari_a = (
+                int((hari_ini - plan_a_dt).days)
+                if pd.notna(plan_a_dt)
+                else None
+            )
+            ada_po_atau_real_po = bool(no_po_terbit) or pd.notna(tgl_po_real)
+            ada_tanggal_realisasi = df_pr_warn["Realisasi_Tgl"].notna().any()
+            deskripsi_kosong = (
+                df_pr_warn.loc[df_pr_warn["Realisasi_Tgl"].isna(), "Deskripsi"]
+                .astype(str)
+                .str.strip()
+                .tolist()
+            )
+
+            warning_lines = []
+            tampilkan_warning = False
+
+            if ada_po_atau_real_po and deskripsi_kosong:
+              if pd.notna(tgl_po_real) and pd.notna(tgl_plan_po):
+                selisih_po = int((tgl_po_real - tgl_plan_po).days)
+                if selisih_po > 0:
+                  tampilkan_warning = True
+                  warning_lines.append(
+                      "• Selisih Realisasi PO - Plan PO:"
+                      f" **+{selisih_po} hari** (lewat dari Plan PO)"
+                  )
+              else:
+                tampilkan_warning = True
+            elif ada_tanggal_realisasi and deskripsi_kosong:
+              tampilkan_warning = True
+            elif (not ada_po_atau_real_po) and (not ada_tanggal_realisasi):
+              if selisih_hari_a is not None:
+                tampilkan_warning = True
+
+            if tampilkan_warning:
+              if selisih_hari_a is not None:
+                warning_lines.insert(
+                    0,
+                    "• Selisih tanggal hari ini"
+                    f" ({hari_ini.strftime('%d %b %Y')}) terhadap Plan A_Pra Tender:"
+                    f" **{selisih_hari_a} hari**",
+                )
+              if (
+                  ada_po_atau_real_po or ada_tanggal_realisasi
+              ) and deskripsi_kosong:
+                warning_lines.append(
+                    "• Deskripsi realisasi masih kosong:"
+                    f" **{', '.join(deskripsi_kosong)}**"
+                )
+              st.error("  \n".join(warning_lines))
 
       # --- TAB 2: RESUME TABEL JADWAL ---
       with tab_tabel:
-        st.subheader("📄 Detail Jadwal Tahapan untuk PR")
-        df_display = df_filtered[[
-            "Nomor PR",
-            "Deskripsi",
-            "Hari",
-            "Plan",
-            "Selesai",
-            "Realisasi_Tgl",
-            "Posisi_Realisasi",
-            "Durasi_Hover_Text",
-            "Milestone",
-        ]].reset_index(drop=True)
-        df_display.index = range(1, len(df_display) + 1)
+        with st.container(border=True):
+          st.subheader("📄 Detail Jadwal Tahapan untuk PR")
+          df_display = df_filtered[[
+              "Nomor PR",
+              "Deskripsi",
+              "Hari",
+              "Plan",
+              "Selesai",
+              "Realisasi_Tgl",
+              "Posisi_Realisasi",
+              "Durasi_Hover_Text",
+              "Milestone",
+          ]].reset_index(drop=True)
+          df_display.index = range(1, len(df_display) + 1)
 
-        for col_tgl in ["Plan", "Selesai", "Realisasi_Tgl"]:
-          df_display[col_tgl] = (
-              pd.to_datetime(df_display[col_tgl], errors="coerce")
-              .dt.strftime("%d %b %Y")
-              .fillna("-")
+          for col_tgl in ["Plan", "Selesai", "Realisasi_Tgl"]:
+            df_display[col_tgl] = (
+                pd.to_datetime(df_display[col_tgl], errors="coerce")
+                .dt.strftime("%d %b %Y")
+                .fillna("-")
+            )
+
+          st.dataframe(
+              df_display, use_container_width=True, key="tabel_detail_pr"
           )
-
-        st.dataframe(
-            df_display, use_container_width=True, key="tabel_detail_pr"
-        )
     else:
       st.warning("Silakan pilih minimal satu Nomor PR di panel sebelah kiri.")
 
