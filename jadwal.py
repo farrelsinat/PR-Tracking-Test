@@ -22,8 +22,28 @@ st.markdown(
         border: 1px solid #e2e8f0;
         border-top: 4px solid #2563eb;
         border-radius: 10px;
-        padding: 0.75rem 1rem;
+        padding: 0.65rem 0.75rem;
         box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+      }
+      div[data-testid="stMetricLabel"] p {
+        font-size: 0.82rem !important;
+        white-space: normal !important;
+        overflow-wrap: break-word !important;
+        line-height: 1.2 !important;
+      }
+      div[data-testid="stMetricValue"] {
+        font-size: 1.15rem !important;
+        line-height: 1.25 !important;
+      }
+      div[data-testid="stMetricValue"] > div {
+        font-size: 1.15rem !important;
+        white-space: normal !important;
+        overflow: visible !important;
+        text-overflow: unset !important;
+        word-break: break-word !important;
+      }
+      div[data-testid="stMetricDelta"] {
+        font-size: 0.78rem !important;
       }
     </style>
     """,
@@ -462,7 +482,7 @@ if uploaded_file is not None:
         )
 
         # Kartu metrik berwarna (komponen bawaan Streamlit)
-        m1, m2, m3, m4 = st.columns(4)
+        m1, m2, m3, m4 = st.columns([0.85, 0.85, 1.15, 1.15])
         m1.metric(
             "📊 Overall Progress PR",
             f"{overall_progres_pct:.2f}%",
