@@ -1,4 +1,7 @@
 import hmac
+import html
+import re
+import time
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -9,6 +12,14 @@ st.set_page_config(
     page_icon="📊",
     layout="wide",
 )
+
+# --- KONFIGURASI KEAMANAN ---
+MAX_PIN_ATTEMPTS = 3
+LOCKOUT_SECONDS = 60
+MAX_EXCEL_SIZE_MB = 10
+MAX_EXCEL_SIZE_BYTES = MAX_EXCEL_SIZE_MB * 1024 * 1024
+MAX_EXCEL_SHEETS = 15
+MAX_EXCEL_ROWS = 10000
 
 # --- STYLING RINGAN UNTUK MEMPERCANTIK KOMPONEN BAWAAN STREAMLIT ---
 st.markdown(
@@ -50,26 +61,58 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# --- BLOK PENGECEKAN PIN ---
+# --- BLOK PENGECEKAN PIN DENGAN BATASAN 3x PERCOBAAN ---
 if "pin_valid" not in st.session_state:
   st.session_state.pin_valid = False
+if "failed_pin_attempts" not in st.session_state:
+  st.session_state.failed_pin_attempts = 0
+if "pin_lock_until" not in st.session_state:
+  st.session_state.pin_lock_until = 0.0
 
+now_ts = time.time()
 if not st.session_state.pin_valid:
   _, col_mid, _ = st.columns([1, 1.3, 1])
   with col_mid:
     with st.container(border=True):
       st.subheader("🔒 Verifikasi Akses")
-      st.caption("Masukkan PIN untuk membuka aplikasi Tracking Jadwal PR.")
+
+      if now_ts < st.session_state.pin_lock_until:
+        sisa_detik = max(1, int(st.session_state.pin_lock_until - now_ts))
+        st.error(
+            f"Terlalu banyak percobaan PIN gagal (maksimal {MAX_PIN_ATTEMPTS}x). "
+            f"Silakan tunggu **{sisa_detik} detik** sebelum mencoba lagi."
+        )
+        st.stop()
+
+      st.caption(
+          f"Masukkan PIN untuk membuka aplikasi Tracking Jadwal PR "
+          f"(maksimal {MAX_PIN_ATTEMPTS} kali percobaan)."
+      )
       input_pin = st.text_input(
           "PIN Akses", type="password", placeholder="Masukkan PIN..."
       )
       if st.button("Masuk", type="primary", use_container_width=True):
         benar_pin = str(st.secrets.get("APP_PIN", ""))
-        if benar_pin and hmac.compare_digest(input_pin, benar_pin):
+        if not benar_pin:
+          st.error("Konfigurasi PIN aplikasi belum diatur di server.")
+        elif input_pin and hmac.compare_digest(input_pin, benar_pin):
           st.session_state.pin_valid = True
+          st.session_state.failed_pin_attempts = 0
+          st.session_state.pin_lock_until = 0.0
           st.rerun()
         else:
-          st.error("PIN salah atau belum diatur.")
+          st.session_state.failed_pin_attempts += 1
+          if st.session_state.failed_pin_attempts >= MAX_PIN_ATTEMPTS:
+            st.session_state.pin_lock_until = time.time() + LOCKOUT_SECONDS
+            st.session_state.failed_pin_attempts = 0
+            st.rerun()
+          else:
+            sisa_percobaan = (
+                MAX_PIN_ATTEMPTS - st.session_state.failed_pin_attempts
+            )
+            st.error(
+                f"PIN salah. Sisa kesempatan percobaan: **{sisa_percobaan} kali**."
+            )
   st.stop()
 
 # --- HEADER UTAMA ---
@@ -80,6 +123,20 @@ with st.container(border=True):
   )
 
 
+def _sanitize_text(val, max_len=250):
+  """Membersihkan teks dinamis dari Excel agar aman dari injeksi HTML/Markdown."""
+  if pd.isna(val):
+    return ""
+  text = str(val).replace("\n", " ").replace("\r", " ")
+  # Hapus karakter kontrol non-printable
+  text = re.sub(r"[\x00-\x1f\x7f]", "", text).strip()
+  # Escape karakter HTML (<, >, &, ", ')
+  text = html.escape(text, quote=True)
+  if len(text) > max_len:
+    text = text[:max_len].rstrip() + "..."
+  return text
+
+
 def _clean_id_str(val):
   """Mengubah angka/teks ID (Nomor PR / Nomor PO) menjadi string bersih tanpa '.0'."""
   if pd.isna(val):
@@ -87,7 +144,7 @@ def _clean_id_str(val):
   num_val = pd.to_numeric(val, errors="coerce")
   if pd.notna(num_val):
     return str(int(round(num_val)))
-  s = str(val).strip()
+  s = _sanitize_text(val, max_len=64)
   return s[:-2] if s.endswith(".0") else s
 
 
@@ -104,17 +161,54 @@ def _is_none_text(val):
   return str(val).strip().lower() in {"none", "nan", "nat"}
 
 
-@st.cache_data
+def _validate_excel_upload(uploaded_file):
+  """Memvalidasi ukuran, nama ekstensi, dan signature file Excel."""
+  file_size = getattr(uploaded_file, "size", 0)
+  if file_size <= 0:
+    raise ValueError("File Excel kosong (0 byte).")
+  if file_size > MAX_EXCEL_SIZE_BYTES:
+    size_mb = file_size / (1024 * 1024)
+    raise ValueError(
+        f"Ukuran file ({size_mb:.2f} MB) melebihi batas maksimal {MAX_EXCEL_SIZE_MB} MB."
+    )
+
+  file_name = str(getattr(uploaded_file, "name", "")).lower()
+  if not file_name.endswith((".xlsx", ".xls")):
+    raise ValueError("Format file tidak didukung. Gunakan file .xlsx atau .xls.")
+
+  # Cek magic bytes file Excel (.xlsx = ZIP PK\x03\x04, .xls = OLE2 \xD0\xCF\x11\xE0)
+  uploaded_file.seek(0)
+  header_bytes = uploaded_file.read(4)
+  uploaded_file.seek(0)
+  is_xlsx_sig = header_bytes == b"PK\x03\x04"
+  is_xls_sig = header_bytes == b"\xd0\xcf\x11\xe0"
+  if not (is_xlsx_sig or is_xls_sig):
+    raise ValueError(
+        "Isi file tidak valid sebagai dokumen Excel (.xlsx/.xls)."
+    )
+
+
+# Tanpa @st.cache_data agar data sensitif Excel tidak tersimpan di cache lintas sesi/pengguna
 def load_schedule_data(uploaded_file):
+  _validate_excel_upload(uploaded_file)
   uploaded_file.seek(0)
   xls = pd.ExcelFile(uploaded_file)
+
+  if len(xls.sheet_names) > MAX_EXCEL_SHEETS:
+    raise ValueError(
+        f"Jumlah sheet ({len(xls.sheet_names)}) melebihi batas maksimal {MAX_EXCEL_SHEETS} sheet."
+    )
 
   # 1. Baca sheet Jadwal
   jadwal_sheet = next(
       (s for s in xls.sheet_names if s.strip().lower() == "jadwal"),
       xls.sheet_names[0],
   )
-  df = pd.read_excel(xls, sheet_name=jadwal_sheet)
+  df = pd.read_excel(xls, sheet_name=jadwal_sheet, nrows=MAX_EXCEL_ROWS + 1)
+  if len(df) > MAX_EXCEL_ROWS:
+    raise ValueError(
+        f"Jumlah baris melebihi batas maksimal {MAX_EXCEL_ROWS:,} baris."
+    )
 
   # 2. Baca mapping Nomor PR -> Header, Nomor PO, Nilai PR, Nilai PO dari sheet "Nomor PR"
   pr_info_map = {}
@@ -122,7 +216,9 @@ def load_schedule_data(uploaded_file):
       (s for s in xls.sheet_names if s.strip().lower() == "nomor pr"), None
   )
   if pr_sheet is not None:
-    df_pr_sheet = pd.read_excel(xls, sheet_name=pr_sheet)
+    df_pr_sheet = pd.read_excel(
+        xls, sheet_name=pr_sheet, nrows=MAX_EXCEL_ROWS
+    )
     df_pr_sheet.columns = df_pr_sheet.columns.astype(str).str.strip()
     header_col = next(
         (c for c in df_pr_sheet.columns if c.strip().lower() == "header"),
@@ -133,11 +229,7 @@ def load_schedule_data(uploaded_file):
         k = _clean_id_str(r_pr["Nomor PR"])
         if k:
           raw_header = r_pr.get(header_col) if header_col else ""
-          clean_header = (
-              ""
-              if pd.isna(raw_header)
-              else str(raw_header).replace("\n", " ").strip()
-          )
+          clean_header = _sanitize_text(raw_header, max_len=200)
           n_pr_num = pd.to_numeric(r_pr.get("Nilai PR"), errors="coerce")
           n_po_num = pd.to_numeric(r_pr.get("Nilai PO"), errors="coerce")
           pr_info_map[k] = {
@@ -176,10 +268,15 @@ def load_schedule_data(uploaded_file):
   if "Realisasi_Input" not in df.columns:
     df["Realisasi_Input"] = pd.NaT
 
+  if "Nomor PR" not in df.columns or "Deskripsi" not in df.columns:
+    raise ValueError(
+        "Kolom wajib ('Nomor PR' atau 'Deskripsi') tidak ditemukan pada sheet Jadwal."
+    )
+
   df = df.dropna(subset=["Nomor PR"]).copy()
   df["Nomor PR"] = df["Nomor PR"].apply(_clean_id_str)
-  df["Deskripsi"] = (
-      df["Deskripsi"].astype(str).str.replace("\n", " ", regex=True).str.strip()
+  df["Deskripsi"] = df["Deskripsi"].apply(
+      lambda v: _sanitize_text(v, max_len=180)
   )
   df["Hari"] = pd.to_numeric(df["Hari"], errors="coerce").fillna(1).astype(int)
   df["Plan_Input"] = pd.to_datetime(df["Plan_Input"], errors="coerce")
@@ -305,7 +402,8 @@ def load_schedule_data(uploaded_file):
 with st.sidebar:
   st.header("📂 Data Source")
   uploaded_file = st.file_uploader(
-      "Upload File Excel - Jadwal", type=["xlsx", "xls"]
+      f"Upload File Excel - Jadwal (Maks. {MAX_EXCEL_SIZE_MB} MB)",
+      type=["xlsx", "xls"],
   )
   st.divider()
   if st.button("🚪 Kunci / Logout PIN", use_container_width=True):
@@ -513,11 +611,16 @@ if uploaded_file is not None:
               "%d %B %Y"
           )
 
-          header_pr_str = str(first_pr_row.get("Header_PR", "")).strip()
+          pr_safe = _sanitize_text(pr, max_len=64)
+          header_pr_str = _sanitize_text(
+              first_pr_row.get("Header_PR", ""), max_len=200
+          )
           tgl_plan_po = first_pr_row["Tgl_Plan_PO"]
           tgl_po_plan = first_pr_row["Tgl_Akhir_PO"]
           tgl_po_real = first_pr_row["Tgl_Real_PO"]
-          no_po_terbit = str(first_pr_row.get("Nomor_PO_Terbit", "")).strip()
+          no_po_terbit = _sanitize_text(
+              first_pr_row.get("Nomor_PO_Terbit", ""), max_len=64
+          )
           nilai_pr_str = str(first_pr_row.get("Nilai_PR_USD", "")).strip()
           nilai_po_str = str(first_pr_row.get("Nilai_PO_USD", "")).strip()
 
@@ -601,7 +704,7 @@ if uploaded_file is not None:
           with st.container(border=True):
             col_head, col_prog = st.columns([3, 1.2])
             with col_head:
-              judul_pr = f"#### 📌 Nomor PR: {pr}"
+              judul_pr = f"#### 📌 Nomor PR: {pr_safe}"
               if header_pr_str:
                 judul_pr += f" — {header_pr_str}"
               st.markdown(judul_pr)
@@ -670,12 +773,12 @@ if uploaded_file is not None:
             )
             ada_po_atau_real_po = bool(no_po_terbit) or pd.notna(tgl_po_real)
             ada_tanggal_realisasi = df_pr_warn["Realisasi_Tgl"].notna().any()
-            deskripsi_kosong = (
-                df_pr_warn.loc[df_pr_warn["Realisasi_Tgl"].isna(), "Deskripsi"]
-                .astype(str)
-                .str.strip()
-                .tolist()
-            )
+            deskripsi_kosong = [
+                _sanitize_text(d, max_len=120)
+                for d in df_pr_warn.loc[
+                    df_pr_warn["Realisasi_Tgl"].isna(), "Deskripsi"
+                ].tolist()
+            ]
 
             warning_lines = []
             tampilkan_warning = False
@@ -744,8 +847,12 @@ if uploaded_file is not None:
     else:
       st.warning("Silakan pilih minimal satu Nomor PR di panel sebelah kiri.")
 
-  except Exception as e:
-    st.error(f"Terjadi kesalahan saat memproses file jadwal: {e}")
+  except ValueError as ve:
+    st.error(f"Validasi file gagal: {ve}")
+  except Exception:
+    st.error(
+        "Terjadi kesalahan saat memproses file jadwal. Pastikan format dan struktur sheet sesuai template."
+    )
 else:
   st.info(
       "Silakan unggah file Excel jadwal pada panel **Data Source** di sebelah kiri untuk menampilkan Gantt Chart dan ringkasan PR."
