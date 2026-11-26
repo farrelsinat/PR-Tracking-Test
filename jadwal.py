@@ -16,6 +16,7 @@ st.set_page_config(
 # --- KONFIGURASI KEAMANAN ---
 MAX_PIN_ATTEMPTS = 3
 LOCKOUT_SECONDS = 60
+SESSION_TIMEOUT_SECONDS = 5 * 60  # 5 menit
 MAX_EXCEL_SIZE_MB = 10
 MAX_EXCEL_SIZE_BYTES = MAX_EXCEL_SIZE_MB * 1024 * 1024
 MAX_EXCEL_SHEETS = 15
@@ -61,20 +62,55 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# --- BLOK PENGECEKAN PIN DENGAN BATASAN 3x PERCOBAAN ---
+# --- BLOK PENGECEKAN PIN DENGAN BATASAN 3x PERCOBAAN & TIMEOUT 5 MENIT ---
 if "pin_valid" not in st.session_state:
   st.session_state.pin_valid = False
+if "login_at" not in st.session_state:
+  st.session_state.login_at = 0.0
 if "failed_pin_attempts" not in st.session_state:
   st.session_state.failed_pin_attempts = 0
 if "pin_lock_until" not in st.session_state:
   st.session_state.pin_lock_until = 0.0
+if "session_expired_msg" not in st.session_state:
+  st.session_state.session_expired_msg = ""
+if "uploader_key" not in st.session_state:
+  st.session_state.uploader_key = 0
+
+
+def _clear_uploaded_data():
+  """Menghapus file unggahan & filter PR dari state sesi aktif."""
+  st.session_state.uploader_key += 1
+  if "multiselect_nomor_pr" in st.session_state:
+    del st.session_state["multiselect_nomor_pr"]
+
+
+def _logout_session(expired=False):
+  """Mengunci ulang sesi dan membersihkan data unggahan dari memori sesi."""
+  _clear_uploaded_data()
+  st.session_state.pin_valid = False
+  st.session_state.login_at = 0.0
+  if expired:
+    st.session_state.session_expired_msg = (
+        "Sesi otomatis berakhir setelah 5 menit. Silakan masukkan PIN kembali."
+    )
+
 
 now_ts = time.time()
+
+# Cek apakah sesi aktif sudah melewati batas waktu 5 menit
+if st.session_state.pin_valid and st.session_state.login_at > 0:
+  if (now_ts - st.session_state.login_at) >= SESSION_TIMEOUT_SECONDS:
+    _logout_session(expired=True)
+    st.rerun()
+
 if not st.session_state.pin_valid:
   _, col_mid, _ = st.columns([1, 1.3, 1])
   with col_mid:
     with st.container(border=True):
       st.subheader("🔒 Verifikasi Akses")
+
+      if st.session_state.session_expired_msg:
+        st.warning(st.session_state.session_expired_msg)
 
       if now_ts < st.session_state.pin_lock_until:
         sisa_detik = max(1, int(st.session_state.pin_lock_until - now_ts))
@@ -86,7 +122,7 @@ if not st.session_state.pin_valid:
 
       st.caption(
           f"Masukkan PIN untuk membuka aplikasi Tracking Jadwal PR "
-          f"(maksimal {MAX_PIN_ATTEMPTS} kali percobaan)."
+          f"(maksimal {MAX_PIN_ATTEMPTS}x percobaan • durasi sesi 5 menit)."
       )
       input_pin = st.text_input(
           "PIN Akses", type="password", placeholder="Masukkan PIN..."
@@ -97,8 +133,10 @@ if not st.session_state.pin_valid:
           st.error("Konfigurasi PIN aplikasi belum diatur di server.")
         elif input_pin and hmac.compare_digest(input_pin, benar_pin):
           st.session_state.pin_valid = True
+          st.session_state.login_at = time.time()
           st.session_state.failed_pin_attempts = 0
           st.session_state.pin_lock_until = 0.0
+          st.session_state.session_expired_msg = ""
           st.rerun()
         else:
           st.session_state.failed_pin_attempts += 1
@@ -401,13 +439,25 @@ def load_schedule_data(uploaded_file):
 # --- SIDEBAR: UPLOAD & FILTER PR ---
 with st.sidebar:
   st.header("📂 Data Source")
+  sisa_sesi_detik = max(
+      0, int(SESSION_TIMEOUT_SECONDS - (time.time() - st.session_state.login_at))
+  )
+  sisa_menit, sisa_dtk = divmod(sisa_sesi_detik, 60)
+  st.caption(f"⏱️ Sisa waktu sesi aktif: **{sisa_menit}m {sisa_dtk:02d}d**")
+
   uploaded_file = st.file_uploader(
       f"Upload File Excel - Jadwal (Maks. {MAX_EXCEL_SIZE_MB} MB)",
       type=["xlsx", "xls"],
+      key=f"excel_uploader_{st.session_state.uploader_key}",
   )
+  if uploaded_file is not None:
+    if st.button("🧹 Bersihkan Data Unggahan", use_container_width=True):
+      _clear_uploaded_data()
+      st.rerun()
+
   st.divider()
   if st.button("🚪 Kunci / Logout PIN", use_container_width=True):
-    st.session_state.pin_valid = False
+    _logout_session(expired=False)
     st.rerun()
 
 if uploaded_file is not None:
