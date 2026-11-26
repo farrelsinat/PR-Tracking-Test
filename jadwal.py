@@ -4,6 +4,27 @@ import plotly.graph_objects as go
 import streamlit as st
 
 st.set_page_config(page_title="Tracking Jadwal PR & Gantt Chart", layout="wide")
+
+import hmac
+
+# ... setelah st.set_page_config(...) ...
+if "pin_valid" not in st.session_state:
+  st.session_state.pin_valid = False
+
+if not st.session_state.pin_valid:
+  st.title("🔒 Verifikasi Akses")
+  st.write("Masukkan PIN untuk membuka aplikasi tracking jadwal PR.")
+  input_pin = st.text_input("PIN Akses", type="password")
+
+  if st.button("Masuk"):
+    benar_pin = str(st.secrets.get("APP_PIN", ""))
+    if benar_pin and hmac.compare_digest(input_pin, benar_pin):
+      st.session_state.pin_valid = True
+      st.rerun()
+    else:
+      st.error("PIN salah atau belum diatur.")
+  st.stop()
+  
 st.markdown("## 📋 Tracking Timeline Pengadaan Berdasarkan Nomor PR")
 st.caption("Gantt Chart Jadwal Proses Pengadaan (Plan & Realisasi)" \
 " - Fungsi Asset Management")
