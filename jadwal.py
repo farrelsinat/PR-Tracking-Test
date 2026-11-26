@@ -3,7 +3,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-st.set_page_config(page_title="Tracking Jadwal PR & Gantt Chart", layout="wide")
+st.set_page_config(page_title="PR Tracking - Dummy", layout="wide")
 
 import hmac
 
@@ -13,7 +13,7 @@ if "pin_valid" not in st.session_state:
 
 if not st.session_state.pin_valid:
   st.title("🔒 Verifikasi Akses")
-  st.write("Masukkan PIN untuk membuka aplikasi tracking jadwal PR.")
+  st.write("Masukkan PIN!")
   input_pin = st.text_input("PIN Akses", type="password")
 
   if st.button("Masuk"):
