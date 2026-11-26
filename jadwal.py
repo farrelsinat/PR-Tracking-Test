@@ -10,7 +10,7 @@ from datetime import datetime
 
 st.set_page_config(
     page_title="PR Tracking - Dummy",
-    page_icon="📊",
+    page_icon="📋",
     layout="wide",
 )
 
