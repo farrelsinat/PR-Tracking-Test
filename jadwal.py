@@ -1,4 +1,11 @@
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
+
+try:
+  TZ_WIB = ZoneInfo("Asia/Jakarta")
+except Exception:
+  TZ_WIB = timezone(timedelta(hours=7))
+
 import hmac
 import html
 import re
@@ -478,8 +485,8 @@ def hitung_progres_pr(df_pr_single):
 with st.sidebar:
   st.header("📂 Data Source")
   waktu_kadaluarsa = datetime.fromtimestamp(
-      st.session_state.login_at + SESSION_TIMEOUT_SECONDS
-  ).strftime("%H:%M:%S")
+      st.session_state.login_at + SESSION_TIMEOUT_SECONDS, tz=TZ_WIB
+  ).strftime("%H:%M:%S WIB")
   st.caption(f"⏱️ Sesi kadaluarsa pukul: **{waktu_kadaluarsa}**")
 
   uploaded_file = st.file_uploader(
