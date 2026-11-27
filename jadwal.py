@@ -635,7 +635,7 @@ if uploaded_file is not None:
               paper_bgcolor="#ffffff",
               plot_bgcolor="#f8fafc",
               font=dict(size=11, color="#0f172a"),
-              margin=dict(t=1, b=1),
+              margin=dict(t=25, b=135, l=15, r=15),
               xaxis=dict(
                   showgrid=True, gridcolor="#e2e8f0", tickformat="%d %b %Y"
               ),
