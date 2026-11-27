@@ -539,7 +539,6 @@ if uploaded_file is not None:
                   "📦 Delivery Time PO": "#e11d48",
                   "📥 Goods Receipt (GR)": "#2563eb",
               },
-              title="<b>Gantt Chart Tracking Milestone PR (Plan & Realisasi)</b>",
               hover_data={
                   "Nomor PR": True,
                   "Hari": True,
@@ -598,8 +597,8 @@ if uploaded_file is not None:
                         name=name_lbl,
                         marker=dict(
                             color=clr,
-                            size=9,
-                            line=dict(color="#0f172a", width=1.1),
+                            size=7,
+                            line=dict(color="#0f172a", width=0.5),
                         ),
                         customdata=list(
                             zip(
@@ -636,21 +635,17 @@ if uploaded_file is not None:
               paper_bgcolor="#ffffff",
               plot_bgcolor="#f8fafc",
               font=dict(size=11, color="#0f172a"),
-              margin=dict(t=45, b=130, l=15, r=15),
+              margin=dict(t=1, b=1),
               xaxis=dict(
                   showgrid=True, gridcolor="#e2e8f0", tickformat="%d %b %Y"
               ),
-              yaxis=dict(showgrid=True, gridcolor="#f1f5f9"),
               legend=dict(
-                  orientation="h",
-                  yanchor="top",
-                  y=-0.24,
-                  xanchor="left",
-                  x=0,
-                  bgcolor="#ffffff",
-                  bordercolor="#e2e8f0",
-                  borderwidth=1,
                   title="Status Milestone & Realisasi",
+                  orientation="h",
+                  x=-0.3,
+                  y=-0.1,
+                  xanchor="left",
+                  yanchor="top",
               ),
           )
           st.plotly_chart(
