@@ -713,9 +713,7 @@ if uploaded_file is not None:
           )
 
           pr_safe = _sanitize_text(pr, max_len=64)
-          header_pr_str = _sanitize_text(
-              first_pr_row.get("Header_PR", ""), max_len=200
-          )
+          header_pr_str = str(first_pr_row.get("Header_PR", "")).strip()
           tgl_plan_po = first_pr_row["Tgl_Plan_PO"]
           tgl_po_plan = first_pr_row["Tgl_Akhir_PO"]
           tgl_po_real = first_pr_row["Tgl_Real_PO"]
