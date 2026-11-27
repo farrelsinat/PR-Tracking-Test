@@ -640,8 +640,6 @@ if uploaded_file is not None:
                   showgrid=True, gridcolor="#e2e8f0", tickformat="%d %b %Y"
               ),
               legend=dict(
-                  bgcolor="#ffffff",
-                  bordercolor="#e2e8f0",
                   title="Status Milestone & Realisasi",
                   orientation="h",
                   x=-0.15,
