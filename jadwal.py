@@ -643,7 +643,7 @@ if uploaded_file is not None:
                   title="Status Milestone & Realisasi",
                   orientation="h",
                   x=-0.2,
-                  y=-0.24,
+                  y=-0.1,
                   xanchor="left",
                   yanchor="top",
               ),
