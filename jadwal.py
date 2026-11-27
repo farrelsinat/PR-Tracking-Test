@@ -636,12 +636,17 @@ if uploaded_file is not None:
               paper_bgcolor="#ffffff",
               plot_bgcolor="#f8fafc",
               font=dict(size=11, color="#0f172a"),
-              margin=dict(t=60, b=45, l=15, r=15),
+              margin=dict(t=45, b=85, l=15, r=15),
               xaxis=dict(
                   showgrid=True, gridcolor="#e2e8f0", tickformat="%d %b %Y"
               ),
               yaxis=dict(showgrid=True, gridcolor="#f1f5f9"),
               legend=dict(
+                  orientation="h",
+                  yanchor="top",
+                  y=-0.18,
+                  xanchor="left",
+                  x=0,
                   bgcolor="#ffffff",
                   bordercolor="#e2e8f0",
                   borderwidth=1,
