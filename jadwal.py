@@ -1064,8 +1064,8 @@ if uploaded_file is not None:
                       y=plan_cum_vals,
                       mode="lines+markers+text",
                       name="Plan V_Goods Receipt (Akumulasi Nilai PR)",
-                      line=dict(color="#2563eb", width=3),
-                      marker=dict(size=8),
+                      line=dict(color="#2563eb", width=0.5),
+                      marker=dict(size=7),
                       text=[f"{pct:.1f}%" for pct in plan_pct_vals],
                       textposition="top center",
                       customdata=list(
