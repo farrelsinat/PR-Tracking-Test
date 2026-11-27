@@ -635,15 +635,15 @@ if uploaded_file is not None:
               paper_bgcolor="#ffffff",
               plot_bgcolor="#f8fafc",
               font=dict(size=11, color="#0f172a"),
-              margin=dict(t=25, b=135, l=15, r=15),
+              margin=dict(t=1, b=1),
               xaxis=dict(
                   showgrid=True, gridcolor="#e2e8f0", tickformat="%d %b %Y"
               ),
               legend=dict(
                   title="Status Milestone & Realisasi",
                   orientation="h",
-                  x=-0.2,
-                  y=-0.1,
+                  x=-0.3,
+                  y=-0.2,
                   xanchor="left",
                   yanchor="top",
               ),
