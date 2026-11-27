@@ -642,7 +642,7 @@ if uploaded_file is not None:
               legend=dict(
                   title="Status Milestone & Realisasi",
                   orientation="h",
-                  x=0,
+                  x=-0.2,
                   y=-0.24,
                   xanchor="left",
                   yanchor="top",
